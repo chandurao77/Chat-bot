@@ -1,4 +1,4 @@
-# Confluence RAG
+# Chat-bot
 
 A Retrieval-Augmented Generation (RAG) application that integrates with Confluence to provide intelligent chat capabilities over your documentation and knowledge base.
 
