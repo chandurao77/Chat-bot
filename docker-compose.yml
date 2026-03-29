@@ -1,0 +1,57 @@
+version: "3.9"
+networks:
+  internal:
+    driver: bridge
+  frontend:
+    driver: bridge
+volumes:
+  qdrant_data:
+  ollama_data:
+  sqlite_data:
+  local_docs:
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    networks: [internal]
+    volumes: [qdrant_data:/qdrant/storage]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    networks: [internal]
+    volumes: [ollama_data:/root/.ollama]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/11434' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+  backend:
+    build: {context: ./backend, dockerfile: Dockerfile}
+    container_name: backend
+    env_file: .env
+    networks: [internal, frontend]
+    ports: ["8000:8000"]
+    volumes: [sqlite_data:/data, local_docs:/local_docs]
+    depends_on:
+      qdrant: {condition: service_healthy}
+      ollama: {condition: service_healthy}
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  frontend:
+    build: {context: ./frontend, dockerfile: Dockerfile}
+    container_name: frontend
+    networks: [frontend]
+    ports: ["3000:80"]
+    depends_on: [backend]
