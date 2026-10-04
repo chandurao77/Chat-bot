@@ -77,6 +77,32 @@ class Settings(BaseSettings):
     redis_enabled: bool = False
     redis_url: str = "redis://redis:6379"
 
+    # Words kept from each retrieved source when building the prompt
+    words_per_source: int = 400
+
+    # Aliases: the older app/core and app/ingestion modules use these names.
+    # They read from the canonical settings above so there is one source of truth.
+    @property
+    def vector_top_k(self) -> int: return self.retrieval_top_k
+    @property
+    def vector_score_threshold(self) -> float: return self.retrieval_score_threshold
+    @property
+    def max_sources(self) -> int: return self.llm_max_sources
+    @property
+    def conversation_history_turns(self) -> int: return self.max_history_turns
+    @property
+    def chunk_size_words(self) -> int: return self.chunk_size
+    @property
+    def chunk_overlap_words(self) -> int: return self.chunk_overlap
+    @property
+    def embed_cache_ttl_seconds(self) -> int: return self.embed_cache_ttl
+    @property
+    def graph_rag_max_extra(self) -> int: return self.graph_max_expansion
+    @property
+    def llm_num_predict(self) -> int: return self.llm_max_tokens
+    @property
+    def semantic_cache_ttl_minutes(self) -> int: return max(1, self.semantic_cache_ttl // 60)
+
     class Config:
         env_file = ".env"
         extra = "ignore"
